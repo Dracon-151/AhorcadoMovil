@@ -14,6 +14,7 @@ public class InputController : MonoBehaviour
 
     private string palabra;
     private int correctas, incorrectas;
+    
 
     public void receiveInput(string input)
     {
@@ -35,11 +36,12 @@ public class InputController : MonoBehaviour
         //Habilita las letras del teclado
         foreach(Button child in contenedorTeclado.GetComponentsInChildren<Button>())
         {
+            child.enabled = true;
             child.interactable = true;
         }
 
         //Elimina las letras de la palabra
-        foreach(Transform child in contenedorPalabra.GetComponentInChildren<Transform>())
+        foreach (Transform child in contenedorPalabra.GetComponentInChildren<Transform>())
         {
             Destroy(child.gameObject);
         }
@@ -49,6 +51,9 @@ public class InputController : MonoBehaviour
         {
             stage.SetActive(false);
         }
+
+        //Le quita lo morado a larry
+        ahorcadoFases[0].GetComponentInChildren<Animator>().ResetTrigger("end");
 
         //Genera una nueva palabra
         palabra = generarPalabra().ToUpper();
@@ -110,6 +115,15 @@ public class InputController : MonoBehaviour
                 //Cambia a verde el color de las letras en pantalla
                 contenedorPalabra.GetComponentsInChildren<TextMeshProUGUI>()[i].color = Color.green;
             }
+            
+            //Aumenta contador global de palabras adivinadas
+            PlayerPrefs.SetInt("words", PlayerPrefs.GetInt("words") + 1);
+
+            //Agrega nuevo record de palabras seguidas
+            if (PlayerPrefs.GetInt("words") > PlayerPrefs.GetInt("record"))
+            {
+                PlayerPrefs.SetInt("record", PlayerPrefs.GetInt("words"));
+            }
 
             Invoke("IniciarJuego", 3f);
         }
@@ -125,6 +139,9 @@ public class InputController : MonoBehaviour
                 //Imprime las letras faltantes de la palabra
                 contenedorPalabra.GetComponentsInChildren<TextMeshProUGUI>()[i].text = palabra[i].ToString();
             }
+
+            //Cambia a morado a larry
+            ahorcadoFases[0].GetComponentInChildren<Animator>().SetTrigger("end");
 
             Invoke("IniciarJuego", 3f);
         }
