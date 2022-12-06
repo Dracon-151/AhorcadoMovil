@@ -11,4 +11,9 @@ public class SceneChange : MonoBehaviour
 
         SceneManager.LoadScene(id);
     }
+
+    public void closeGame()
+    {
+        Application.Quit();
+    }
 }

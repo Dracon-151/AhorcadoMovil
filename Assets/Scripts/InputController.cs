@@ -11,10 +11,13 @@ public class InputController : MonoBehaviour
     [SerializeField] GameObject contenedorLetra;
     [SerializeField] GameObject[] ahorcadoFases;
     [SerializeField] TextAsset palabrasPosibles;
-
-    private string palabra;
-    private int correctas, incorrectas;
     
+    [SerializeField] AudioClip[] sonidos;
+
+    private ArrayList listaPalabras;
+    private string palabra;
+    private int correctas, incorrectas, indexPalabra;
+
 
     public void receiveInput(string input)
     {
@@ -24,6 +27,10 @@ public class InputController : MonoBehaviour
 
     void Start()
     {
+        //Ordena las palabras de la lista en un arreglo
+        listaPalabras = new ArrayList(palabrasPosibles.text.Split("\n"));
+        listaPalabras.RemoveAt(listaPalabras.Count - 1);
+
         IniciarJuego();
     }
 
@@ -34,7 +41,7 @@ public class InputController : MonoBehaviour
         incorrectas = 0;
 
         //Habilita las letras del teclado
-        foreach(Button child in contenedorTeclado.GetComponentsInChildren<Button>())
+        foreach (Button child in contenedorTeclado.GetComponentsInChildren<Button>())
         {
             child.enabled = true;
             child.interactable = true;
@@ -47,7 +54,7 @@ public class InputController : MonoBehaviour
         }
 
         //Desactiva las partes del ahorcado
-        foreach(GameObject stage in ahorcadoFases)
+        foreach (GameObject stage in ahorcadoFases)
         {
             stage.SetActive(false);
         }
@@ -58,7 +65,7 @@ public class InputController : MonoBehaviour
         //Genera una nueva palabra
         palabra = generarPalabra().ToUpper();
 
-        foreach(char letra in palabra)
+        foreach (char letra in palabra)
         {
             var temp = Instantiate(contenedorLetra, contenedorPalabra.transform);
         }
@@ -67,10 +74,17 @@ public class InputController : MonoBehaviour
     //Esta funcion selecciona una palabra aleatorea de la lista
     private string generarPalabra()
     {
-        //Ordena las palabras de la lista en un arreglo
-        string[] listaPalabras = palabrasPosibles.text.Split("\n");
+        indexPalabra = Random.Range(0, listaPalabras.Count - 1);
+
+        //Vuelve a llenar la lista si se acabaron las palabras
+        if (listaPalabras.Count < 1)
+        {
+            listaPalabras = new ArrayList(palabrasPosibles.text.Split("\n"));
+            listaPalabras.RemoveAt(listaPalabras.Count - 1);
+        }
+
         //Selecciona una al azar
-        string linea = listaPalabras[Random.Range(0, listaPalabras.Length - 1)];
+        string linea = "" + listaPalabras[indexPalabra];
         //Elimina el "breakline" de la palabra para evitar errores
         return linea.Substring(0, linea.Length - 1);
     }
@@ -90,6 +104,9 @@ public class InputController : MonoBehaviour
                 correctas++;
                 //Muestra las letras correctas en pantalla en la posicion correspondiente
                 contenedorPalabra.GetComponentsInChildren<TextMeshProUGUI>()[i].text = letra;
+
+                //Sonido acierto
+                this.GetComponent<AudioSource>().PlayOneShot(sonidos[1]);
             }
         }
 
@@ -98,6 +115,9 @@ public class InputController : MonoBehaviour
         {
             incorrectas++;
             ahorcadoFases[incorrectas - 1].SetActive(true);
+
+            //Sonido error
+            this.GetComponent<AudioSource>().PlayOneShot(sonidos[0]);
         }
 
         //Revisa si se a ganado o perdido
@@ -125,6 +145,12 @@ public class InputController : MonoBehaviour
                 PlayerPrefs.SetInt("record", PlayerPrefs.GetInt("words"));
             }
 
+            //Elimina esa palabra del arreglo de palabras
+            listaPalabras.RemoveAt(indexPalabra);
+
+            //Sonido victoria
+            this.GetComponent<AudioSource>().PlayOneShot(sonidos[3]);
+
             Invoke("IniciarJuego", 3f);
         }
 
@@ -139,6 +165,9 @@ public class InputController : MonoBehaviour
                 //Imprime las letras faltantes de la palabra
                 contenedorPalabra.GetComponentsInChildren<TextMeshProUGUI>()[i].text = palabra[i].ToString();
             }
+
+            //Sonido palabra fallida
+            this.GetComponent<AudioSource>().PlayOneShot(sonidos[2]);
 
             //Cambia a morado a larry
             ahorcadoFases[0].GetComponentInChildren<Animator>().SetTrigger("end");
